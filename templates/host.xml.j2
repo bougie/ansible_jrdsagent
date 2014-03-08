@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<host name="{{ansible_hostname}}" dnsName="{{ansible_default_ipv4.address}}">
+	<connection type="jrds.snmp.SnmpConnection" name="snmpconnection">
+		<attr name="community">appartland-home-public</attr>
+		<attr name="port">161</attr>
+		<attr name="version">2</attr>
+	</connection>
+
+	<connection type="jrds.probe.RMIConnection" name="agentconnection" />
+
+	{% for ifx in ansible_interfaces %}
+	<probe type="IfStat" timer="step60" connection="agentconnection">
+		<attr name="index">{{ifx}}</attr>
+	</probe>
+	{% endfor %}
+
+	{% for disk in ansible_devices %}
+	<probe type="Diskstats" timer="step60" connection="agentconnection">
+		<attr name="index">{{disk}}</attr>
+	</probe>
+	{% endfor %}
+
+	{% for mnt in ansible_mounts %}
+	<probe type="DiskUsage" timer="step1800" connection="agentconnection">
+		<attr name="index">{{mnt.mount}}</attr>
+	</probe>
+	{% endfor %}
+
+	<probe type="Meminfo26" connection="agentconnection"/>
+	<probe type="IPx4" connection="snmpconnection" />
+	<probe type="IPx6" connection="snmpconnection" />
+	<probe type="CpuStatsLinux" connection="agentconnection" />
+
+	{% if 'xen' in group_names %}
+	<probe type="CpuStatsVirtualLinux" connection="agentconnection" />
+	{% endif %}
+
+	{% if 'bind' in group_names %}
+	<probe type="BindXml">
+		<arg type="Integer" value="8053" />
+	</probe>
+	<probe type="BindXmlView" label="default">
+		<arg type="Integer" value="8053" />
+		<list>
+			<arg type="String" value="_default" />
+		</list>
+	</probe>
+	{% endif %}
+
+	{% if 'mysql' in group_names %}
+	<connection type="jrds.probe.jdbc.JdbcConnection" name="mysqlconnection">
+		<arg type="String" value="jrds" />
+		<arg type="String" value="jrds" />
+		<arg type="String" value="jdbc:mysql://{{ansible_default_ipv4.address}}" />
+		<arg type="String" value="com.mysql.jdbc.Driver" />
+	</connection>
+	<probe type="MySqlStatusGeneric" connection="mysqlconnection" />
+	{% endif %}
+
+	{% if 'postgresql' in group_names %}
+	<connection type="jrds.probe.jdbc.JdbcConnection" name="pgsqlconnection">
+		<arg type="String" value="jrds" />
+		<arg type="String" value="jrds" />
+		<arg type="String" value="jdbc:postgresql://{{ansible_default_ipv4.address}}/postgres" />        
+	</connection>
+		{% for dbname in ansible_local.postgresql.databases %}
+		<probe type="PgStatDatabase" connection="pgsqlconnection">
+			<arg type="String" value="{{dbname}}" />
+		</probe>
+		{% endfor %}
+	{% endif %}
+</host>

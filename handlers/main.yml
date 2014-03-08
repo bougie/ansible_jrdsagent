@@ -1,0 +1,4 @@
+- name: restart jrds
+  service: name=jrds-jetty state=restarted
+  delegate_to: '{{item}}'
+  with_items: groups.jrds

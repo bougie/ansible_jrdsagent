@@ -1,0 +1,21 @@
+- name: add jrds agent repository
+  apt_repository: repo='deb http://repository.crdp.ac-versailles.fr/debian/ jrds main' state=present update_cache=yes
+
+- name: add gpg key for the jrds repository
+  apt_key: url=http://repository.crdp.ac-versailles.fr/crdp.gpg state=present
+
+- name: update repository catalog
+  apt: update_cache=yes
+
+- name: install jrdsagent
+  apt: name=jrdsagent state=present install_recommends=no
+
+- name: ensuire jrdsagent is running
+  service: name=jrdsagent state=started
+
+- name: generate host config file
+  template: src=host.xml.j2 dest=/etc/jrds/hosts/auto/{{ansible_hostname}}.xml mode=0644
+  delegate_to: '{{item}}'
+  with_items: groups.jrds
+  notify:
+  - restart jrds
