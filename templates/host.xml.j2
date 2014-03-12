@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <host name="{{ansible_hostname}}" dnsName="{{ansible_default_ipv4.address}}">
+	{% for grp in group_names %}
+	<tag>{{grp}}</tag>
+	{% endfor %}
+
 	<connection type="jrds.snmp.SnmpConnection" name="snmpconnection">
 		<attr name="community">appartland-home-public</attr>
 		<attr name="port">161</attr>
@@ -13,6 +17,7 @@
 		<attr name="index">{{ifx}}</attr>
 	</probe>
 	{% endfor %}
+	<probe type="Smokeping" timer="step60" />
 
 	{% for disk in ansible_devices %}
 	<probe type="Diskstats" timer="step60" connection="agentconnection">
