@@ -16,6 +16,9 @@
 	<probe type="IfStat" timer="step60" connection="agentconnection">
 		<attr name="index">{{ifx}}</attr>
 	</probe>
+	<probe type="IfXSnmp" timer="step60" connection="snmpconnection">
+		<arg type="String" value="{{ifx}}" />
+	</probe>
 	{% endfor %}
 	<probe type="Smokeping" timer="step60" />
 
